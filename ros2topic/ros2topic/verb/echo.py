@@ -21,6 +21,7 @@ from typing import TypeVar
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
+from rclpy.task import Future
 from ros2cli.node.strategy import NodeStrategy
 from ros2topic.api import add_qos_arguments_to_argument_parser
 from ros2topic.api import get_msg_class
@@ -76,6 +77,8 @@ class EchoVerb(VerbExtension):
             '--no-arr', action='store_true', help="Don't print array fields of messages")
         parser.add_argument(
             '--no-str', action='store_true', help="Don't print string fields of messages")
+        parser.add_argument( 
+            '--once', action='store_true', help="Print the first message received and then exit")
 
     def main(self, *, args):
         return main(args)
@@ -99,8 +102,13 @@ def main(args):
         if message_type is None:
             raise RuntimeError('Could not determine the type for the passed topic')
 
+        future = None
+        if args.once:
+            future = Future()
+            callback = subscriber_cb_once_decorator(callback, future)
+
         subscriber(
-            node, args.topic_name, message_type, callback, qos_profile)
+            node, args.topic_name, message_type, callback, qos_profile, future)
 
 
 def subscriber(
@@ -108,13 +116,17 @@ def subscriber(
     topic_name: str,
     message_type: MsgType,
     callback: Callable[[MsgType], Any],
-    qos_profile: QoSProfile
+    qos_profile: QoSProfile,
+    future = None
 ) -> Optional[str]:
     """Initialize a node with a single subscription and spin."""
     node.create_subscription(
         message_type, topic_name, callback, qos_profile)
 
-    rclpy.spin(node)
+    if future == None:
+        rclpy.spin(node)
+    else:
+        rclpy.spin_until_future_complete(node, future)
 
 
 def subscriber_cb(truncate_length, noarr, nostr):
@@ -131,4 +143,11 @@ def subscriber_cb_csv(truncate_length, noarr, nostr):
     def cb(msg):
         nonlocal truncate_length, noarr, nostr
         print(message_to_csv(msg, truncate_length=truncate_length, no_arr=noarr, no_str=nostr))
+    return cb
+
+def subscriber_cb_once_decorator(callback : Callable, future : Future) -> Callable:
+    def cb(msg):
+        if not future.done():
+            callback(msg)
+            future.set_result(True)
     return cb
