@@ -105,9 +105,8 @@ def main(args):
         if message_type is None:
             raise RuntimeError('Could not determine the type for the passed topic')
 
-        future = None
+        future = Future()
         if args.once:
-            future = Future()
             callback = subscriber_cb_once_decorator(callback, future)
 
         subscriber(
@@ -120,19 +119,17 @@ def subscriber(
     message_type: MsgType,
     callback: Callable[[MsgType], Any],
     qos_profile: QoSProfile,
-    future = None,
+    future : Future,
     timeout = None
 ) -> Optional[str]:
     """Initialize a node with a single subscription and spin."""
     node.create_subscription(
         message_type, topic_name, callback, qos_profile)
 
-    if future is None:
-        rclpy.spin(node)
+    if not timeout is None:
+        rclpy.spin_until_future_complete(node, future, timeout_sec=timeout)
     else:
-        rclpy.spin_until_future_complete(node, future, timeout)
-        if not future.done():
-            node.get_logger().error("Timeout occured after " + str(timeout) + " secconds: No message received on topic \"" + topic_name + "\"")
+        rclpy.spin_until_future_complete(node, future)
 
 
 def subscriber_cb(truncate_length, noarr, nostr):
