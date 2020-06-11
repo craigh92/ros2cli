@@ -79,6 +79,9 @@ class EchoVerb(VerbExtension):
             '--no-str', action='store_true', help="Don't print string fields of messages")
         parser.add_argument( 
             '--once', action='store_true', help="Print the first message received and then exit")
+        parser.add_argument(
+            '--timeout', metavar='N', type=unsigned_int, default=3.0,
+            help='If used with --once, the time after which the application will exit even if no message is received')
 
     def main(self, *, args):
         return main(args)
@@ -108,7 +111,7 @@ def main(args):
             callback = subscriber_cb_once_decorator(callback, future)
 
         subscriber(
-            node, args.topic_name, message_type, callback, qos_profile, future)
+            node, args.topic_name, message_type, callback, qos_profile, future, args.timeout)
 
 
 def subscriber(
@@ -117,7 +120,8 @@ def subscriber(
     message_type: MsgType,
     callback: Callable[[MsgType], Any],
     qos_profile: QoSProfile,
-    future = None
+    future = None,
+    timeout = None
 ) -> Optional[str]:
     """Initialize a node with a single subscription and spin."""
     node.create_subscription(
@@ -126,7 +130,9 @@ def subscriber(
     if future == None:
         rclpy.spin(node)
     else:
-        rclpy.spin_until_future_complete(node, future)
+        rclpy.spin_until_future_complete(node, future, timeout)
+        if not future.done():
+            node.get_logger().error("Timeout occured after " + str(timeout) + " secconds: No message received on topic \"" + topic_name + "\"")
 
 
 def subscriber_cb(truncate_length, noarr, nostr):
