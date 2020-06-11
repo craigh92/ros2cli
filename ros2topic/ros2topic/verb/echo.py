@@ -127,7 +127,7 @@ def subscriber(
     node.create_subscription(
         message_type, topic_name, callback, qos_profile)
 
-    if future == None:
+    if future is None:
         rclpy.spin(node)
     else:
         rclpy.spin_until_future_complete(node, future, timeout)
