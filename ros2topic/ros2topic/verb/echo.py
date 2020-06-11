@@ -126,10 +126,10 @@ def subscriber(
     node.create_subscription(
         message_type, topic_name, callback, qos_profile)
 
-    if not timeout is None:
-        rclpy.spin_until_future_complete(node, future, timeout_sec=timeout)
-    else:
+    if timeout is None:
         rclpy.spin_until_future_complete(node, future)
+    else:
+        rclpy.spin_until_future_complete(node, future, timeout_sec=timeout)
 
 
 def subscriber_cb(truncate_length, noarr, nostr):
