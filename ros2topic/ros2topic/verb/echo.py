@@ -77,11 +77,12 @@ class EchoVerb(VerbExtension):
             '--no-arr', action='store_true', help="Don't print array fields of messages")
         parser.add_argument(
             '--no-str', action='store_true', help="Don't print string fields of messages")
-        parser.add_argument( 
+        parser.add_argument(
             '--once', action='store_true', help="Print the first message received and then exit")
         parser.add_argument(
-            '--timeout', metavar='N', type=unsigned_int, default=None,
-            help='The time after which the application will exit')
+            '--timeout', type=unsigned_int, default=None,
+            help='Number of seconds before exiting (default: None)')
+
 
     def main(self, *, args):
         return main(args)
@@ -104,7 +105,7 @@ def main(args):
 
         if message_type is None:
             raise RuntimeError('Could not determine the type for the passed topic')
-
+        
         future = Future()
         if args.once:
             callback = subscriber_cb_once_decorator(callback, future)
@@ -119,15 +120,14 @@ def subscriber(
     message_type: MsgType,
     callback: Callable[[MsgType], Any],
     qos_profile: QoSProfile,
-    future : Future,
-    timeout = None
+    future : Any,
+    timeout : Any
 ) -> Optional[str]:
     """Initialize a node with a single subscription and spin."""
     node.create_subscription(
         message_type, topic_name, callback, qos_profile)
 
     rclpy.spin_until_future_complete(node, future, timeout_sec=timeout)
-
 
 def subscriber_cb(truncate_length, noarr, nostr):
     def cb(msg):
@@ -148,6 +148,6 @@ def subscriber_cb_csv(truncate_length, noarr, nostr):
 def subscriber_cb_once_decorator(callback : Callable, future : Future) -> Callable:
     def cb(msg):
         if not future.done():
-            callback(msg)
             future.set_result(True)
+            callback(msg)
     return cb
