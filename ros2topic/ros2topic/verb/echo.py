@@ -81,7 +81,7 @@ class EchoVerb(VerbExtension):
             '--once', action='store_true', help="Print the first message received and then exit")
         parser.add_argument(
             '--timeout', type=unsigned_int, default=None,
-            help='Number of seconds before exiting (default: None)')
+            help='Number of seconds before exiting')
 
 
     def main(self, *, args):
