@@ -120,8 +120,8 @@ def subscriber(
     message_type: MsgType,
     callback: Callable[[MsgType], Any],
     qos_profile: QoSProfile,
-    future : Any,
-    timeout : Any
+    future : Future,
+    timeout : Optional[int]
 ) -> Optional[str]:
     """Initialize a node with a single subscription and spin."""
     node.create_subscription(
