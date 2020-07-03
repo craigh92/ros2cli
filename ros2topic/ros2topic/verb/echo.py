@@ -81,7 +81,7 @@ class EchoVerb(VerbExtension):
             '--no-arr', action='store_true', help="Don't print array fields of messages")
         parser.add_argument(
             '--no-str', action='store_true', help="Don't print string fields of messages")
-        parser.add_argument( 
+        parser.add_argument(
             '--once', action='store_true', help="Print the first message received and then exit")
         parser.add_argument(
             '--timeout', metavar='N', type=unsigned_int, default=None,
