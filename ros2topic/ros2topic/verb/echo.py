@@ -39,17 +39,6 @@ from rosidl_runtime_py.utilities import get_message
 DEFAULT_TRUNCATE_LENGTH = 128
 MsgType = TypeVar('MsgType')
 
-
-def unsigned_int(string):
-    try:
-        value = int(string)
-    except ValueError:
-        value = -1
-    if value < 0:
-        raise ArgumentTypeError('value must be non-negative integer')
-    return value
-
-
 class EchoVerb(VerbExtension):
     """Output messages from a topic."""
 
@@ -81,6 +70,8 @@ class EchoVerb(VerbExtension):
             '--no-arr', action='store_true', help="Don't print array fields of messages")
         parser.add_argument(
             '--no-str', action='store_true', help="Don't print string fields of messages")
+        parser.add_argument(
+            '--lost-messages', action='store_true', help='Report when a message is lost')
         parser.add_argument(
             '--once', action='store_true', help="Print the first message received and then exit")
         parser.add_argument(
